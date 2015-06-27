@@ -1,5 +1,5 @@
-OUT        = cower
-VERSION    = $(shell git describe)
+OUT        = cydcv
+VERSION    = 0.0.1
 
 SRC        = cydcv.c
 OBJ        = $(SRC:.c=.o)
@@ -14,6 +14,9 @@ LDFLAGS   := $(LDFLAGS)
 LDLIBS     = -lcurl -lyajl
 
 all: $(OUT)
+
+cower:
+	${CC} $(CFLAGS) $(SRC) $(LDFLAGS) $(LDLIBS) -o $(OUT)
 
 strip: $(OUT)
 	strip --strip-all $(OUT)

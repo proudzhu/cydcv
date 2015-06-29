@@ -21,6 +21,16 @@ static inline void freep(void *p) { free(*(void**) p); }
 #define YD_API_URL	YD_BASE_URL "/openapi.do?keyfrom=%s&key=%s&type=data&doctype=json&version=1.1&q=%s"
 
 /* typedefs and objects */
+struct list_t {
+	void *data;
+	struct list_t *next;
+};
+typedef struct list_t list_t;
+
+#define FREELIST(p) do { list_free_inner(p, free); list_free(p); p = NULL; } while(0)
+
+typedef void (*list_fn_free)(void *); /* item deallocation callback */
+
 struct string_list_t {
 	unsigned char *content;
 	struct string_list_t *next;
@@ -117,6 +127,55 @@ static const struct key_t json_keys[] = {
 	{ "web",			JSON_KEY_WEB_DIC,	0, 0 },
 };
 
+list_t *list_add(list_t *list, unsigned char *str)
+{
+	list_t *ptr, *lp;
+
+	ptr = malloc(sizeof(list_t));
+	if (ptr == NULL)
+		return list;
+
+	ptr->data = str;
+	ptr->next = NULL;
+
+	/* Special case: the input list is empty */
+	if (list == NULL) {
+		return ptr;
+	}
+
+	lp = list;
+	while (lp->next)
+		lp = lp->next;
+
+	lp->next = ptr;
+	return list;
+}
+void list_free(list_t *list)
+{
+	list_t *it = list;
+
+	while (it) {
+		list_t *tmp = it->next;
+		free(it);
+		it = tmp;
+	}
+}
+
+void list_free_inner(list_t *list, list_fn_free fn)
+{
+	list_t *it = list;
+
+	if (fn) {
+		while (it) {
+			if (it->data)
+				free(it->data);
+			it = it->next;
+		}
+	}
+}
+
+#define FREELIST(p) do { list_free_inner(p, free); list_free(p); p = NULL; } while(0)
+
 string_list_t *string_list_add(string_list_t *list, unsigned char *str)
 {
 	printf("string_list_add: list - 0x%x, str - 0x%x\n",
@@ -142,8 +201,6 @@ string_list_t *string_list_add(string_list_t *list, unsigned char *str)
 	lp->next = ptr;
 	return list;
 }
-
-
 
 void string_list_free(string_list_t *list)
 {
@@ -182,15 +239,6 @@ void free_basic_dic(basic_dic_t *basic_dic)
 	free(basic_dic->phonetic);
 	free(basic_dic->uk_phonetic);
 
-	/*
-	string_list_free(basic_dic->explains);
-	string_list_t *it = basic_dic->explains;
-	while (it) {
-		string_list_t *tmp = it->next;
-		free(it);
-		it = tmp;
-	}
-	*/
 	FREE_STRING_LIST(basic_dic->explains);
 
 	memset(basic_dic, 0, sizeof(basic_dic_t));
@@ -202,15 +250,6 @@ void free_web_dic(web_dic_t *web_dic)
 		return;
 
 	free(web_dic->key);
-	/*
-	string_list_free(web_dic->value);
-	string_list_t *it = web_dic->value;
-	while (it) {
-		string_list_t *tmp = it->next;
-		free(it);
-		it = tmp;
-	}
-	*/
 	FREE_STRING_LIST(web_dic->value);
 
 	memset(web_dic, 0, sizeof(web_dic_t));
@@ -222,7 +261,6 @@ void free_web_dic_list(web_dic_list_t *list)
 	while (it) {
 		web_dic_list_t *tmp = it->next;
 		free(it);
-		// memset(it, 0, sizeof(web_dic_list_t));
 		it = tmp;
 	}
 }

@@ -70,7 +70,7 @@ struct json_parser_t {
 
 	char *query;
 	int errorcode;
-	web_dic_t *web_dic;
+	web_dic_t web_dic;
 	web_dic_list_t *web_dic_list;
 };
 typedef struct json_parser_t json_parser_t;
@@ -143,7 +143,20 @@ string_list_t *string_list_add(string_list_t *list, unsigned char *str)
 	return list;
 }
 
+
+
 void string_list_free(string_list_t *list)
+{
+	string_list_t *it = list;
+
+	while (it) {
+		string_list_t *tmp = it->next;
+		free(it);
+		it = tmp;
+	}
+}
+
+void string_list_free_inner(string_list_t *list)
 {
 	if (list == NULL)
 		return;
@@ -151,12 +164,14 @@ void string_list_free(string_list_t *list)
 	string_list_t *it = list;
 
 	while (it) {
-		string_list_t *tmp = it->next;
-		free(it->content);
-		memset(it, 0, sizeof(string_list_t));
-		it = tmp;
+		if (it->content)
+			free(it->content);
+		// memset(it, 0, sizeof(string_list_t));
+		it = it->next;
 	}
 }
+
+#define FREE_STRING_LIST(p) do { string_list_free_inner(p); string_list_free(p); p = NULL; } while(0)
 
 void free_basic_dic(basic_dic_t *basic_dic)
 {
@@ -167,7 +182,16 @@ void free_basic_dic(basic_dic_t *basic_dic)
 	free(basic_dic->phonetic);
 	free(basic_dic->uk_phonetic);
 
+	/*
 	string_list_free(basic_dic->explains);
+	string_list_t *it = basic_dic->explains;
+	while (it) {
+		string_list_t *tmp = it->next;
+		free(it);
+		it = tmp;
+	}
+	*/
+	FREE_STRING_LIST(basic_dic->explains);
 
 	memset(basic_dic, 0, sizeof(basic_dic_t));
 }
@@ -178,23 +202,65 @@ void free_web_dic(web_dic_t *web_dic)
 		return;
 
 	free(web_dic->key);
+	/*
 	string_list_free(web_dic->value);
+	string_list_t *it = web_dic->value;
+	while (it) {
+		string_list_t *tmp = it->next;
+		free(it);
+		it = tmp;
+	}
+	*/
+	FREE_STRING_LIST(web_dic->value);
 
 	memset(web_dic, 0, sizeof(web_dic_t));
 }
 
 void free_web_dic_list(web_dic_list_t *list)
 {
-	if (list == NULL)
-		return;
-
 	web_dic_list_t *it = list;
 	while (it) {
 		web_dic_list_t *tmp = it->next;
-		free_web_dic(it->web_dic);
-		memset(it, 0, sizeof(web_dic_list_t));
+		free(it);
+		// memset(it, 0, sizeof(web_dic_list_t));
 		it = tmp;
 	}
+}
+
+void free_web_dic_list_inner(web_dic_list_t *list)
+{
+	web_dic_list_t *it = list;
+
+	while (it) {
+		if (it->web_dic) {
+			free_web_dic(it->web_dic);
+			free(it->web_dic);
+		}
+		it = it->next;
+	}
+}
+
+#define FREE_WEB_DIC_LIST(p) do { free_web_dic_list_inner(p); free_web_dic_list(p); p = NULL; } while(0)
+
+void json_parser_free_inner(json_parser_t *parser)
+{
+	if (parser == NULL)
+		return;
+
+	/* free allocated string fields */
+	free(parser->query);
+
+	/* free extended list info */
+	FREE_STRING_LIST(parser->translation);
+	free_basic_dic(parser->basic_dic);
+	free(parser->basic_dic);
+	FREE_WEB_DIC_LIST(parser->web_dic_list);
+}
+
+void json_parser_free(json_parser_t *parser)
+{
+	json_parser_free_inner(parser);
+	free(parser);
 }
 
 web_dic_t *webdic_dup(web_dic_t *web_dic)
@@ -262,9 +328,9 @@ int json_end_map(void *ctx)
 	if (p->depth > 0) {
 		if (p->key->type == JSON_KEY_WEB_DIC)
 		{
-			p->web_dic_list = web_dic_list_add(p->web_dic_list, webdic_dup(p->web_dic));
+			p->web_dic_list = web_dic_list_add(p->web_dic_list, webdic_dup(&p->web_dic));
 			// print_web_dic_list(p->web_dic_list);
-			memset(p->web_dic, 0, sizeof(web_dic_t));
+			// memset(p->web_dic, 0, sizeof(web_dic_t));
 		}
 		printf("json_end_map: type - %d, basic_dic - 0x%x, basic_dic_explains - 0x%x, web_dic_list - 0x%x\n",
 				p->key->type, (unsigned int)p->basic_dic, (unsigned int)&p->basic_dic->explains,
@@ -289,7 +355,7 @@ void *json_get_valueptr(json_parser_t *parser)
 			addr = (uint8_t *)parser->basic_dic;
 			break;
 		case JSON_KEY_WEB_DIC:
-			addr = (uint8_t *)parser->web_dic;
+			addr = (uint8_t *)&parser->web_dic;
 			break;
 	}
 	printf("json_get_valueptr: type - %d, addr - 0x%x\n",
@@ -334,8 +400,8 @@ int json_start_map(void *ctx)
 			memset(p->basic_dic, 0, sizeof(basic_dic_t));
 		}
 		else if (p->key->type == JSON_KEY_WEB_DIC) {
-			p->web_dic = malloc(sizeof(web_dic_t));
-			memset(p->web_dic, 0, sizeof(web_dic_t));
+			// p->web_dic = malloc(sizeof(web_dic_t));
+			memset(&p->web_dic, 0, sizeof(web_dic_t));
 		}
 		printf("json_start_map: type - %d, basic_dic - 0x%x, basic_dic_explains - 0x%x, web_dic_list - 0x%x\n",
 				p->key->type, (unsigned int)p->basic_dic, (unsigned int)&p->basic_dic->explains,
@@ -448,12 +514,6 @@ int query(CURL *curl, const char *word)
 
 	json_parser = malloc(sizeof(json_parser_t));
 	memset(json_parser, 0, sizeof(json_parser_t));
-	// json_parser->basic_dic = malloc(sizeof(basic_dic_t));
-	// memset(json_parser->basic_dic, 0, sizeof(basic_dic_t));
-	// json_parser->web_dic = malloc(sizeof(web_dic_t));
-	// memset(json_parser->web_dic, 0, sizeof(web_dic_t));
-	// json_parser->web_dic_list = malloc(sizeof(web_dic_list_t));
-	// memset(json_parser->web_dic_list, 0, sizeof(web_dic_list_t));
 
 	yajl_hand = yajl_alloc(&callbacks, NULL, json_parser);
 
@@ -484,13 +544,9 @@ int query(CURL *curl, const char *word)
 
 	yajl_free(yajl_hand);
 
-	curl_easy_cleanup(curl);
+	json_parser_free(json_parser);
 
-	free_basic_dic(json_parser->basic_dic);
-	free_web_dic_list(json_parser->web_dic_list);
-	free(json_parser->basic_dic);
-	free(json_parser->web_dic_list);
-	free(json_parser);
+	curl_easy_cleanup(curl);
 
 	curl_global_cleanup();
 

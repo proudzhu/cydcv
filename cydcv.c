@@ -14,6 +14,7 @@
 #define _cleanup_free_ _cleanup_(freep)
 static inline void freep(void *p) { free(*(void**) p); }
 
+// API KEY from ydcv
 #define API "YouDaoCV"
 #define API_KEY "659600698"
 
@@ -113,6 +114,7 @@ static const struct key_t json_keys[] = {
 	{ "web",			JSON_KEY_WEB_DIC,	0, 0 },
 };
 
+// linked list implemention from libalpm
 list_t *list_add(list_t *list, void *data)
 {
 	list_t *ptr, *lp;

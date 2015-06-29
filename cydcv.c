@@ -239,9 +239,9 @@ int json_end_map(void *ctx)
 		{
 			p->web_dic_list = list_add(p->web_dic_list, webdic_dup(&p->web_dic));
 		}
-		printf("json_end_map: type - %d, basic_dic - 0x%x, basic_dic_explains - 0x%x, web_dic_list - 0x%x\n",
-				p->key->type, (unsigned int)p->basic_dic, (unsigned int)&p->basic_dic->explains,
-				(unsigned int)&p->web_dic);
+		// printf("json_end_map: type - %d, basic_dic - 0x%x, basic_dic_explains - 0x%x, web_dic_list - 0x%x\n",
+		//		p->key->type, (unsigned int)p->basic_dic, (unsigned int)&p->basic_dic->explains,
+		//		(unsigned int)&p->web_dic);
 	}
 
 	return 1;
@@ -265,8 +265,8 @@ void *json_get_valueptr(json_parser_t *parser)
 			addr = (uint8_t *)&parser->web_dic;
 			break;
 	}
-	printf("json_get_valueptr: type - %d, addr - 0x%x\n",
-			parser->key->type, (unsigned int)addr);
+	// printf("json_get_valueptr: type - %d, addr - 0x%x\n",
+	//		parser->key->type, (unsigned int)addr);
 
 	return addr + parser->key->offset;
 }
@@ -299,8 +299,8 @@ int json_start_map(void *ctx)
 	json_parser_t *p = ctx;
 
 	p->depth++;
-	printf("json_start_map: depth - %d, json_parser_t - 0x%x\n",
-			p->depth, (unsigned int)p);
+	// printf("json_start_map: depth - %d, json_parser_t - 0x%x\n",
+	//		p->depth, (unsigned int)p);
 	if (p->depth > 1) {
 		if (p->key->type  == JSON_KEY_BASIC_DIC) {
 			p->basic_dic = malloc(sizeof(basic_dic_t));
@@ -310,9 +310,9 @@ int json_start_map(void *ctx)
 			// p->web_dic = malloc(sizeof(web_dic_t));
 			memset(&p->web_dic, 0, sizeof(web_dic_t));
 		}
-		printf("json_start_map: type - %d, basic_dic - 0x%x, basic_dic_explains - 0x%x, web_dic_list - 0x%x\n",
-				p->key->type, (unsigned int)p->basic_dic, (unsigned int)&p->basic_dic->explains,
-				(unsigned int)&p->web_dic);
+		// printf("json_start_map: type - %d, basic_dic - 0x%x, basic_dic_explains - 0x%x, web_dic_list - 0x%x\n",
+		//		p->key->type, (unsigned int)p->basic_dic, (unsigned int)&p->basic_dic->explains,
+		//		(unsigned int)&p->web_dic);
 	}
 
 	return 1;
@@ -327,7 +327,7 @@ int json_string(void *ctx, const unsigned char *data, size_t size)
 	if (valueptr == NULL)
 		return 1;
 
-	printf("json_string: valueptr - 0x%x\n", (unsigned int)valueptr);
+	// printf("json_string: valueptr - 0x%x\n", (unsigned int)valueptr);
 	if (p->key->multivalued)
 		return json_string_multivalued(valueptr, data, size);
 	else
@@ -336,7 +336,7 @@ int json_string(void *ctx, const unsigned char *data, size_t size)
 
 int json_string_multivalued(list_t **dest, const unsigned char *data, size_t size)
 {
-	//printf("json_string_multivalued: dest - 0x%x, data - %s, size - %d\n",
+	// printf("json_string_multivalued: dest - 0x%x, data - %s, size - %d\n",
 	//		dest, data, size);
 	char *str;
 
@@ -430,7 +430,7 @@ int query(CURL *curl, const char *word)
 	cyd_asprintf(&url, YD_API_URL, API, API_KEY, word);
 	curl_easy_setopt(curl, CURLOPT_URL, url);
 
-	printf("curl_easy_perform %s\n", url);
+	// printf("curl_easy_perform %s\n", url);
 	curlstat = curl_easy_perform(curl);
 
 	if (curlstat != CURLE_OK) {
@@ -439,7 +439,7 @@ int query(CURL *curl, const char *word)
 	}
 
 	curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &httpcode);
-	printf("server responded with %ld\n", httpcode);
+	// printf("server responded with %ld\n", httpcode);
 	if (httpcode >= 400) {
 		fprintf(stderr, "error, server responded with HTTP %ld\n", httpcode);
 		return -1;
@@ -478,7 +478,7 @@ void print_explanation(json_parser_t *parser)
 			printf("  Word Explanation:\n");
 			list_t *curr = dic->explains;
 			while (curr->data) {
-				printf("     * %s\n", curr->data);
+				printf("     * %s\n", (unsigned char *)curr->data);
 				if (curr->next)
 					curr = curr->next;
 				else
@@ -491,7 +491,7 @@ void print_explanation(json_parser_t *parser)
 		printf("\n  Translation:\n");
 		list_t *curr = parser->translation;
 		while (curr->data) {
-			printf("     * %s\n", curr->data);
+			printf("     * %s\n", (unsigned char *)curr->data);
 			if (curr->next)
 				curr = curr->next;
 			else
@@ -511,7 +511,7 @@ void print_explanation(json_parser_t *parser)
 			// print values in the same line
 			printf("      ");
 			while (curr) {
-				printf(" %s;", curr->data);
+				printf(" %s;", (unsigned char *)curr->data);
 				if (curr->next)
 					curr = curr->next;
 				else
@@ -541,9 +541,9 @@ int main(int argc, char **argv)
 	}
 
 	const char *word = argv[1];
-	printf("word to translate: %s\n", word);
+	// printf("word to translate: %s\n", word);
 
-	printf("initializing curl\n");
+	// printf("initializing curl\n");
 	curl_global_init(CURL_GLOBAL_ALL);
 	CURL *curl = curl_easy_init();
 

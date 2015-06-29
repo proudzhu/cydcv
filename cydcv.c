@@ -140,13 +140,17 @@ void string_list_add(string_list_t *list, unsigned char *str)
 
 void string_list_free(string_list_t *list)
 {
-	string_list_t *curr = list;
+	if (list == NULL)
+		return;
 
-	while (curr)
-	{
-		free(curr->content);
-		string_list_free(curr->next);
-		memset(curr, 0, sizeof(string_list_t));
+	string_list_t *it = list;
+
+	while (it) {
+		string_list_t *tmp = it->next;
+		free(it->content);
+		// free(it);
+		memset(it, 0, sizeof(string_list_t));
+		it = tmp;
 	}
 }
 
@@ -173,6 +177,21 @@ void free_web_dic(web_dic_t *web_dic)
 	string_list_free(&web_dic->value);
 
 	memset(web_dic, 0, sizeof(web_dic_t));
+}
+
+void free_web_dic_list(web_dic_list_t *list)
+{
+	if (list == NULL)
+		return;
+
+	web_dic_list_t *it = list;
+	while (it) {
+		web_dic_list_t *tmp = it->next;
+		free_web_dic(it->web_dic);
+		// free(it);
+		memset(it, 0, sizeof(web_dic_list_t));
+		it = tmp;
+	}
 }
 
 web_dic_t *webdic_dup(web_dic_t *web_dic)
@@ -298,19 +317,21 @@ int json_start_map(void *ctx)
 	p->depth++;
 	printf("json_start_map: depth - %d, json_parser_t - 0x%x\n",
 			p->depth, (unsigned int)p);
+	/*
 	if (p->depth > 1) {
 		if (p->key->type  == JSON_KEY_BASIC_DIC) {
-			p->basic_dic = malloc(sizeof(basic_dic_t));
-			memset(p->basic_dic, 0, sizeof(basic_dic_t));
+			// p->basic_dic = malloc(sizeof(basic_dic_t));
+			// memset(p->basic_dic, 0, sizeof(basic_dic_t));
 		}
 		else if (p->key->type == JSON_KEY_WEB_DIC) {
-			//p->web_dic_list = malloc(sizeof(web_dic_list_t));
-			//memset(p->web_dic_list, 0, sizeof(web_dic_list_t));
+			// p->web_dic_list = malloc(sizeof(web_dic_list_t));
+			// memset(p->web_dic_list, 0, sizeof(web_dic_list_t));
 		}
 		printf("json_start_map: type - %d, basic_dic - 0x%x, basic_dic_explains - 0x%x, web_dic_list - 0x%x\n",
 				p->key->type, (unsigned int)p->basic_dic, (unsigned int)&p->basic_dic->explains,
 				(unsigned int)&p->web_dic);
 	}
+	*/
 
 	return 1;
 }
@@ -332,7 +353,6 @@ int json_string(void *ctx, const unsigned char *data, size_t size)
 }
 
 int json_string_multivalued(string_list_t *dest, const unsigned char *data, size_t size) {
-	printf("json_string_multivalued: end");
 	char *str;
 
 	str = strndup((const char *)data, size);
@@ -414,8 +434,11 @@ int query(CURL *curl, const char *word)
 
 	json_parser = malloc(sizeof(json_parser_t));
 	memset(json_parser, 0, sizeof(json_parser_t));
+	json_parser->basic_dic = malloc(sizeof(basic_dic_t));
+	memset(json_parser->basic_dic, 0, sizeof(basic_dic_t));
 	json_parser->web_dic_list = malloc(sizeof(web_dic_list_t));
 	memset(json_parser->web_dic_list, 0, sizeof(web_dic_list_t));
+
 	yajl_hand = yajl_alloc(&callbacks, NULL, json_parser);
 
 	curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, yajl_parse_stream);
@@ -444,6 +467,16 @@ int query(CURL *curl, const char *word)
 	print_explanation(json_parser);
 
 	yajl_free(yajl_hand);
+
+	curl_easy_cleanup(curl);
+
+	free_basic_dic(json_parser->basic_dic);
+	free_web_dic_list(json_parser->web_dic_list);
+	free(json_parser->basic_dic);
+	free(json_parser->web_dic_list);
+	free(json_parser);
+
+	curl_global_cleanup();
 
 	return 0;
 }
@@ -532,6 +565,7 @@ int main(int argc, char **argv)
 	printf("word to translate: %s\n", word);
 
 	printf("initializing curl\n");
+	curl_global_init(CURL_GLOBAL_ALL);
 	CURL *curl = curl_easy_init();
 
 	if (curl == NULL)

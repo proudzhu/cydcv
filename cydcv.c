@@ -29,14 +29,6 @@ typedef struct list_t list_t;
 
 typedef void (*list_fn_free)(void *); /* item deallocation callback */
 
-/*
-struct string_list_t {
-	unsigned char *content;
-	struct string_list_t *next;
-};
-typedef struct string_list_t string_list_t;
-*/
-
 enum json_key_type_t {
 	JSON_KEY_METADATA,
 	JSON_KEY_BASIC_DIC,
@@ -64,13 +56,7 @@ struct web_dic_t {
 	char *key;
 };
 typedef struct web_dic_t web_dic_t;
-/*
-struct web_dic_list_t {
-	web_dic_t *web_dic;
-	struct web_dic_list_t *next;
-};
-typedef struct web_dic_list_t web_dic_list_t;
-*/
+
 struct json_parser_t {
 	const struct key_t *key;
 
@@ -175,65 +161,7 @@ void list_free_inner(list_t *list, list_fn_free fn)
 	}
 }
 
-#define FREELIST(p) do { list_free_inner(p, free); list_free(p); p = NULL; } while(0)
-
-#define FREE_STRING_LIST FREELIST
-
-#if 0
-string_list_t *string_list_add(string_list_t *list, unsigned char *str)
-{
-	printf("string_list_add: list - 0x%x, str - 0x%x\n",
-			(unsigned int)list, (unsigned int)str);
-	string_list_t *ptr, *lp;
-
-	ptr = malloc(sizeof(string_list_t));
-	if (ptr == NULL)
-		return list;
-
-	ptr->content = str;
-	ptr->next = NULL;
-
-	/* Special case: the input list is empty */
-	if (list == NULL) {
-		return ptr;
-	}
-
-	lp = list;
-	while (lp->next)
-		lp = lp->next;
-
-	lp->next = ptr;
-	return list;
-}
-
-void string_list_free(string_list_t *list)
-{
-	string_list_t *it = list;
-
-	while (it) {
-		string_list_t *tmp = it->next;
-		free(it);
-		it = tmp;
-	}
-}
-
-void string_list_free_inner(string_list_t *list)
-{
-	if (list == NULL)
-		return;
-
-	string_list_t *it = list;
-
-	while (it) {
-		if (it->content)
-			free(it->content);
-		// memset(it, 0, sizeof(string_list_t));
-		it = it->next;
-	}
-}
-
-#define FREE_STRING_LIST(p) do { string_list_free_inner(p); string_list_free(p); p = NULL; } while(0)
-#endif
+#define FREE_STRING_LIST(p) do { list_free_inner(p, free); list_free(p); p = NULL; } while(0)
 
 void free_basic_dic(basic_dic_t *basic_dic)
 {
@@ -269,57 +197,6 @@ void free_web_dic(void *web_dic)
 }
 
 #define FREE_WEB_DIC_LIST(p) do { list_free_inner(p, free_web_dic); list_free(p); p = NULL; } while(0)
-
-#if 0
-web_dic_list_t *web_dic_list_add(web_dic_list_t *list, web_dic_t *dic)
-{
-	web_dic_list_t *ptr, *lp;
-
-	ptr = malloc(sizeof(web_dic_list_t));
-	if (ptr == NULL)
-		return list;
-
-	ptr->web_dic = dic;
-	ptr->next = NULL;
-
-	/* Special case: the input list is empty */
-	if (list == NULL) {
-		return ptr;
-	}
-
-	lp = list;
-	while (lp->next)
-		lp = lp->next;
-
-	lp->next = ptr;
-	return list;
-}
-
-void free_web_dic_list(web_dic_list_t *list)
-{
-	web_dic_list_t *it = list;
-	while (it) {
-		web_dic_list_t *tmp = it->next;
-		free(it);
-		it = tmp;
-	}
-}
-
-void free_web_dic_list_inner(web_dic_list_t *list)
-{
-	web_dic_list_t *it = list;
-
-	while (it) {
-		if (it->web_dic) {
-			free_web_dic(it->web_dic);
-			free(it->web_dic);
-		}
-		it = it->next;
-	}
-}
-
-#define FREE_WEB_DIC_LIST(p) do { free_web_dic_list_inner(p); free_web_dic_list(p); p = NULL; } while(0)
-#endif
 
 void json_parser_free_inner(json_parser_t *parser)
 {
@@ -361,8 +238,6 @@ int json_end_map(void *ctx)
 		if (p->key->type == JSON_KEY_WEB_DIC)
 		{
 			p->web_dic_list = list_add(p->web_dic_list, webdic_dup(&p->web_dic));
-			// print_web_dic_list(p->web_dic_list);
-			// memset(p->web_dic, 0, sizeof(web_dic_t));
 		}
 		printf("json_end_map: type - %d, basic_dic - 0x%x, basic_dic_explains - 0x%x, web_dic_list - 0x%x\n",
 				p->key->type, (unsigned int)p->basic_dic, (unsigned int)&p->basic_dic->explains,

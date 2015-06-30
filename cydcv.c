@@ -602,7 +602,7 @@ void print_explanation(json_parser_t *parser)
 	} else
 		cyd_printf(LOG_INFO, "\n");
 
-	if (parser->web_dic_list) {
+	if (cfg.out_full && parser->web_dic_list) {
 		has_result = 1;
 		cyd_printf(LOG_INFO, "\n  Web Reference:\n");
 		list_t *list = parser->web_dic_list;

@@ -667,10 +667,11 @@ int parse_options(int argc, char **argv)
 		{"selection",	no_argument,		0, 'x'},
 		{"color",		optional_argument,	0, 'c'},
 		{"debug",		no_argument,		0, OP_DEBUG},
+		{"help",		no_argument,		0, 'h'},
 		{0,				0,					0, 0},
 	};
 
-	while((opt = getopt_long(argc, argv, "fsxc", opts, &option_index)) != -1) {
+	while((opt = getopt_long(argc, argv, "fsxch", opts, &option_index)) != -1) {
 		cyd_printf(LOG_DEBUG, "parse_options: opt - 0x%x\n", opt);
 		switch (opt) {
 			/* options */
@@ -702,6 +703,9 @@ int parse_options(int argc, char **argv)
 			case OP_DEBUG:
 				cfg.logmask |= LOG_DEBUG;
 				break;
+			case 'h':
+				usage();
+				exit(0);
 		}
 	}
 

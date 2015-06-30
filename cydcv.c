@@ -616,7 +616,28 @@ void print_explanation(json_parser_t *parser)
 	cyd_printf(LOG_INFO, "\n");
 }
 
-int parse_option(int argc, char **argv)
+void usage(void)
+{
+	fprintf(stderr, "usage: cydcv [-h] [-f] [-s] [-x] [--color {always,auto,never}]\n");
+	fprintf(stderr, "             [words [words ...]]\n\n");
+	fprintf(stderr, "Youdao Console Version\n\n");
+	fprintf(stderr,
+			"positional arguments:\n"
+			"  words                 words to lookup, or quoted sentences to translate.\n\n");
+	fprintf(stderr,
+			"optional arguments:\n"
+			"  -h, --help            show this help message and exit\n"
+			"  -f, --full            print full web reference, only the first 3 results\n"
+			" 	                     will be printed without this flag.\n"
+			"  -s, --simple          only show explainations. argument \"-f\" will not take\n"
+			"						 effect\n"
+			"  -x, --selection       show explaination of current selection.\n"
+			"  -c, --color {always,auto,never}\n"
+			"						 colorize the output. Default to 'auto' or can be\n"
+			"						 'never' or 'always'.\n\n");
+}
+
+int parse_options(int argc, char **argv)
 {
 	int opt, option_index = 0;
 
@@ -625,12 +646,12 @@ int parse_option(int argc, char **argv)
 		{"full",		no_argument,		0, 'f'},
 		{"simple",		no_argument,		0, 's'},
 		{"selection",	no_argument,		0, 'x'},
-		{"color",		optional_argument,	0, 0},
-		{"words",		required_argument,	0, 0},
+		{"color",		optional_argument,	0, 'c'},
 		{0,				0,					0, 0},
 	};
 
-	while((opt = getopt_long(argc, argv, "fsx", opts, &option_index)) != -1) {
+	while((opt = getopt_long(argc, argv, "fsxc", opts, &option_index)) != -1) {
+		cyd_printf(LOG_DEBUG, "parse_options: opt - 0x%x\n", opt);
 		switch (opt) {
 			/* options */
 			case 'f':
@@ -661,7 +682,8 @@ int parse_option(int argc, char **argv)
 		}
 	}
 
-	while (optind > argc) {
+	while (optind < argc) {
+		cyd_printf(LOG_DEBUG, "add words: %s\n", argv[optind]);
 		cfg.words = list_add(cfg.words, strdup(argv[optind]));
 		optind++;
 	}
@@ -674,19 +696,16 @@ int main(int argc, char **argv)
 	int ret;
 
 	/* initialize config */
-    cfg.logmask = LOG_INFO|LOG_ERROR;
+    cfg.logmask = LOG_INFO|LOG_ERROR|LOG_DEBUG;
 	cfg.out_full = 0;
 	cfg.color = 0;
 	cfg.selection = 0;
 
-	ret = parse_option(argc, argv);
+	ret = parse_options(argc, argv);
 	if (ret)
-		return ret;
-
-	if (argc != 2)
 	{
-		cyd_fprintf(stderr, LOG_ERROR, "usage: cydcv word\n");
-		return -1;
+		usage();
+		return ret;
 	}
 
 	const char *word = argv[1];

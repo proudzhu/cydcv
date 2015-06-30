@@ -537,10 +537,6 @@ int query(CURL *curl, const char *word)
 
 	json_parser_free(json_parser);
 
-	curl_easy_cleanup(curl);
-
-	curl_global_cleanup();
-
 	return 0;
 }
 
@@ -696,7 +692,7 @@ int main(int argc, char **argv)
 	int ret;
 
 	/* initialize config */
-    cfg.logmask = LOG_INFO|LOG_ERROR|LOG_DEBUG;
+    cfg.logmask = LOG_INFO|LOG_ERROR;
 	cfg.out_full = 0;
 	cfg.color = 0;
 	cfg.selection = 0;
@@ -708,9 +704,6 @@ int main(int argc, char **argv)
 		return ret;
 	}
 
-	const char *word = argv[1];
-	cyd_printf(LOG_DEBUG, "word to translate: %s\n", word);
-
 	cyd_printf(LOG_DEBUG, "initializing curl\n");
 	curl_global_init(CURL_GLOBAL_ALL);
 	CURL *curl = curl_easy_init();
@@ -721,7 +714,21 @@ int main(int argc, char **argv)
 		return -1;
 	}
 
-	query(curl, word);
+ 	list_t *word = cfg.words;
+	while (word) {
+		cyd_printf(LOG_DEBUG, "word to translate: %s\n", word->data);
+
+		query(curl, word->data);
+
+		if (word->next)
+			word = word->next;
+		else
+			break;
+	}
+
+	curl_easy_cleanup(curl);
+
+	curl_global_cleanup();
 
 	return 0;
 }

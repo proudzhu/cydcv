@@ -39,6 +39,10 @@ typedef enum __outlevel_t {
 	OUT_FULL	= (1 << 2),
 } outlevel_t;
 
+enum {
+	OP_DEBUG = 1000,
+};
+
 struct list_t {
 	void *data;
 	struct list_t *next;
@@ -630,7 +634,8 @@ void usage(void)
 			"  -x, --selection       show explaination of current selection.\n"
 			"  -c, --color {always,auto,never}\n"
 			"						 colorize the output. Default to 'auto' or can be\n"
-			"						 'never' or 'always'.\n\n");
+			"						 'never' or 'always'.\n"
+		    "  --debug				 show debug info\n\n");
 }
 
 int parse_options(int argc, char **argv)
@@ -643,6 +648,7 @@ int parse_options(int argc, char **argv)
 		{"simple",		no_argument,		0, 's'},
 		{"selection",	no_argument,		0, 'x'},
 		{"color",		optional_argument,	0, 'c'},
+		{"debug",		no_argument,		0, OP_DEBUG},
 		{0,				0,					0, 0},
 	};
 
@@ -674,6 +680,9 @@ int parse_options(int argc, char **argv)
 					fprintf(stderr, "invalid argument to --color\n");
 					return 1;
 				}
+				break;
+			case OP_DEBUG:
+				cfg.logmask |= LOG_DEBUG;
 				break;
 		}
 	}

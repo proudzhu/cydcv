@@ -50,6 +50,7 @@ struct list_t {
 typedef struct list_t list_t;
 
 typedef void (*list_fn_free)(void *); /* item deallocation callback */
+typedef int (*list_fn_cmp)(const void *, const void *); /* item comparsion callback */
 
 enum json_key_type_t {
 	JSON_KEY_METADATA,
@@ -259,6 +260,23 @@ void list_free_inner(list_t *list, list_fn_free fn)
 }
 
 #define FREE_STRING_LIST(p) do { list_free_inner(p, free); list_free(p); p = NULL; } while(0)
+
+void *list_find(const list_t *haystack, const void *needle, list_fn_cmp fn)
+{
+	const list_t *lp = haystack;
+	while (lp) {
+		if (lp->data && fn(lp->data, needle) == 0)
+			return lp->data;
+		lp = lp->next;
+	}
+	return NULL;
+}
+
+char *list_find_str(const list_t *haystack, const char *needle)
+{
+	return (char *)list_find(haystack, (const void *)needle,
+			(list_fn_cmp)strcmp);
+}
 
 void free_basic_dic(basic_dic_t *basic_dic)
 {
@@ -688,8 +706,10 @@ int parse_options(int argc, char **argv)
 	}
 
 	while (optind < argc) {
-		cyd_printf(LOG_DEBUG, "add words: %s\n", argv[optind]);
-		cfg.words = list_add(cfg.words, strdup(argv[optind]));
+		if (!list_find_str(cfg.words, argv[optind])) {
+			cyd_printf(LOG_DEBUG, "add words: %s\n", argv[optind]);
+			cfg.words = list_add(cfg.words, strdup(argv[optind]));
+		}
 		optind++;
 	}
 

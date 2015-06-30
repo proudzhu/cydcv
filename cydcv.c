@@ -646,14 +646,14 @@ void usage(void)
 			"optional arguments:\n"
 			"  -h, --help            show this help message and exit\n"
 			"  -f, --full            print full web reference, only the first 3 results\n"
-			" 	                     will be printed without this flag.\n"
+			"                        will be printed without this flag.\n"
 			"  -s, --simple          only show explainations. argument \"-f\" will not take\n"
-			"						 effect\n"
+			"                        effect\n"
 			"  -x, --selection       show explaination of current selection.\n"
 			"  -c, --color {always,auto,never}\n"
-			"						 colorize the output. Default to 'auto' or can be\n"
-			"						 'never' or 'always'.\n"
-		    "  --debug				 show debug info\n\n");
+			"                        colorize the output. Default to 'auto' or can be\n"
+			"                        'never' or 'always'.\n"
+			"  --debug               show debug info\n\n");
 }
 
 int parse_options(int argc, char **argv)

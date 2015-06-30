@@ -701,7 +701,7 @@ int main(int argc, char **argv)
 	int ret;
 
 	/* initialize config */
-    cfg.logmask = LOG_INFO|LOG_ERROR;
+	cfg.logmask = LOG_INFO|LOG_ERROR;
 	cfg.out_full = 0;
 	cfg.color = 0;
 	cfg.selection = 0;

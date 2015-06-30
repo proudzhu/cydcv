@@ -1,9 +1,11 @@
 /* glibc */
+#include <getopt.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <stdint.h>
+#include <unistd.h>
 
 /* external libs */
 #include <curl/curl.h>
@@ -31,7 +33,12 @@ typedef enum __loglevel_t {
 	LOG_BRIEF   = (1 << 5)
 } loglevel_t;
 
-/* typedefs and objects */
+typedef enum __outlevel_t {
+	OUT_DEFAULT = 1,
+	OUT_SIMPLE	= (1 << 1),
+	OUT_FULL	= (1 << 2),
+} outlevel_t;
+
 struct list_t {
 	void *data;
 	struct list_t *next;
@@ -98,7 +105,11 @@ void print_explanation(json_parser_t *parser);
 /* runtime configuration */
 static struct {
     loglevel_t logmask;
-    short color;
+	int out_full;
+    int color;
+	int selection;
+
+	list_t *words;
 } cfg;
 
 /* globals */
@@ -130,6 +141,11 @@ static const struct key_t json_keys[] = {
 	{ "value",			JSON_KEY_WEB_DIC,	1, offsetof(web_dic_t, value) },
 	{ "web",			JSON_KEY_WEB_DIC,	0, 0 },
 };
+
+int streq(const char *s1, const char *s2)
+{
+	return strcmp(s1, s2) == 0;
+}
 
 int cyd_vfprintf(FILE *stream, loglevel_t level, const char *format, va_list args)
 {
@@ -600,9 +616,73 @@ void print_explanation(json_parser_t *parser)
 	cyd_printf(LOG_INFO, "\n");
 }
 
+int parse_option(int argc, char **argv)
+{
+	int opt, option_index = 0;
+
+	static const struct option opts[] = {
+		/* options */
+		{"full",		no_argument,		0, 'f'},
+		{"simple",		no_argument,		0, 's'},
+		{"selection",	no_argument,		0, 'x'},
+		{"color",		optional_argument,	0, 0},
+		{"words",		required_argument,	0, 0},
+		{0,				0,					0, 0},
+	};
+
+	while((opt = getopt_long(argc, argv, "fsx", opts, &option_index)) != -1) {
+		switch (opt) {
+			/* options */
+			case 'f':
+				cfg.out_full = 1;
+				break;
+			case 's':
+				cfg.out_full = 0;
+				break;
+			case 'x':
+				cfg.selection = 1;
+				break;
+			case 'c':
+				if(!optarg || streq(optarg, "auto")) {
+					if(isatty(fileno(stdout))) {
+						cfg.color = 1;
+					} else {
+						cfg.color = 0;
+					}
+				} else if(streq(optarg, "always")) {
+					cfg.color = 1;
+				} else if(streq(optarg, "never")) {
+					cfg.color = 0;
+				} else {
+					fprintf(stderr, "invalid argument to --color\n");
+					return 1;
+				}
+				break;
+		}
+	}
+
+	while (optind > argc) {
+		cfg.words = list_add(cfg.words, strdup(argv[optind]));
+		optind++;
+	}
+
+	return 0;
+}
+
 int main(int argc, char **argv)
 {
+	int ret;
+
+	/* initialize config */
     cfg.logmask = LOG_INFO|LOG_ERROR;
+	cfg.out_full = 0;
+	cfg.color = 0;
+	cfg.selection = 0;
+
+	ret = parse_option(argc, argv);
+	if (ret)
+		return ret;
+
 	if (argc != 2)
 	{
 		cyd_fprintf(stderr, LOG_ERROR, "usage: cydcv word\n");

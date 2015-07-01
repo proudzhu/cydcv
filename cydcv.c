@@ -803,6 +803,17 @@ int main(int argc, char **argv)
 	}
 
  	list_t *word = cfg.words;
+	while (word) {
+		cyd_printf(LOG_DEBUG, NC, "word to translate: %s\n", word->data);
+
+		query(curl, word->data);
+
+		if (word->next)
+			word = word->next;
+		else
+			break;
+	}
+
 	if (word == NULL) {
 		while (1) {
 			char *line = readline("> ");
@@ -815,17 +826,6 @@ int main(int argc, char **argv)
 				free(line);
 			}
 		}
-	}
-
-	while (word) {
-		cyd_printf(LOG_DEBUG, NC, "word to translate: %s\n", word->data);
-
-		query(curl, word->data);
-
-		if (word->next)
-			word = word->next;
-		else
-			break;
 	}
 
 	curl_easy_cleanup(curl);

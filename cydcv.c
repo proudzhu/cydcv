@@ -10,6 +10,8 @@
 /* external libs */
 #include <curl/curl.h>
 #include <yajl/yajl_parse.h>
+#include <readline/readline.h>
+#include <readline/history.h>
 
 /* macro */
 #define _cleanup_(x) __attribute__((cleanup(x)))
@@ -801,6 +803,20 @@ int main(int argc, char **argv)
 	}
 
  	list_t *word = cfg.words;
+	if (word == NULL) {
+		while (1) {
+			char *line = readline("> ");
+			add_history(line);
+			if (line == NULL) {
+				printf("\nBye\n");
+				break;
+			} else {
+				query(curl, line);
+				free(line);
+			}
+		}
+	}
+
 	while (word) {
 		cyd_printf(LOG_DEBUG, NC, "word to translate: %s\n", word->data);
 

@@ -11,7 +11,7 @@ MANPREFIX ?= $(PREFIX)/share/man
 CPPFLAGS  := -D_GNU_SOURCE -DCOWER_VERSION=\"$(VERSION)\" $(CPPFLAGS)
 CFLAGS    := -std=c99 -g -pedantic -Wall -Wextra $(CFLAGS)
 LDFLAGS   := $(LDFLAGS)
-LDLIBS     = -lcurl -lyajl
+LDLIBS     = -lcurl -lyajl -lreadline
 
 all: $(OUT)
 

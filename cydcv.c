@@ -607,15 +607,25 @@ void print_explanation(json_parser_t *parser)
 	if (parser->basic_dic != NULL) {
 		has_result = 1;
 		basic_dic_t *dic = parser->basic_dic;
-		if (dic->uk_phonetic && dic->us_phonetic)
-			cyd_printf(LOG_INFO, NC, " UK: [%s], US: [%s]\n", dic->uk_phonetic, dic->us_phonetic);
-		else if (dic->phonetic)
-			cyd_printf(LOG_INFO, NC, " [%s]\n", dic->phonetic);
+		if (dic->uk_phonetic && dic->us_phonetic) {
+			// cyd_printf(LOG_INFO, NC, " UK: [%s], US: [%s]\n", dic->uk_phonetic, dic->us_phonetic);
+			cyd_printf(LOG_INFO, NC, " UK: [");
+			cyd_printf(LOG_INFO, YELLOW, "%s", dic->uk_phonetic);
+			cyd_printf(LOG_INFO, NC, "], US: [");
+			cyd_printf(LOG_INFO, YELLOW, "%s", dic->us_phonetic);
+			cyd_printf(LOG_INFO, NC, "]\n");
+		}
+		else if (dic->phonetic) {
+			// cyd_printf(LOG_INFO, NC, " [%s]\n", dic->phonetic);
+			cyd_printf(LOG_INFO, NC, " [");
+			cyd_printf(LOG_INFO, YELLOW, "%s", dic->phonetic);
+			cyd_printf(LOG_INFO, NC, "]\n");
+		}
 		else
 			cyd_printf(LOG_INFO, NC, "\n");
 
 		if (dic->explains) {
-			cyd_printf(LOG_INFO, NC, "  Word Explanation:\n");
+			cyd_printf(LOG_INFO, CYAN, "  Word Explanation:\n");
 			list_t *curr = dic->explains;
 			while (curr->data) {
 				cyd_printf(LOG_INFO, NC, "     * %s\n", (unsigned char *)curr->data);
@@ -628,7 +638,7 @@ void print_explanation(json_parser_t *parser)
 			cyd_printf(LOG_INFO, NC, "\n");
 	} else if (parser->translation) {
 		has_result = 1;
-		cyd_printf(LOG_INFO, NC, "\n  Translation:\n");
+		cyd_printf(LOG_INFO, CYAN, "\n  Translation:\n");
 		list_t *curr = parser->translation;
 		while (curr->data) {
 			cyd_printf(LOG_INFO, NC, "     * %s\n", (unsigned char *)curr->data);
@@ -642,18 +652,23 @@ void print_explanation(json_parser_t *parser)
 
 	if (cfg.out_full && parser->web_dic_list) {
 		has_result = 1;
-		cyd_printf(LOG_INFO, NC, "\n  Web Reference:\n");
+		cyd_printf(LOG_INFO, CYAN, "\n  Web Reference:\n");
 		list_t *list = parser->web_dic_list;
 		while (list) {
 			web_dic_t *web = list->data;
-			cyd_printf(LOG_INFO, NC, "     * %s\n", web->key);
+			// cyd_printf(LOG_INFO, NC, "     * %s\n", web->key);
+			cyd_printf(LOG_INFO, NC, "     * ");
+			cyd_printf(LOG_INFO, YELLOW, "%s\n", web->key);
 			list_t *curr = web->value;
 			// print values in the same line
 			cyd_printf(LOG_INFO, NC, "      ");
 			while (curr) {
-				cyd_printf(LOG_INFO, NC, " %s;", (unsigned char *)curr->data);
-				if (curr->next)
+				// cyd_printf(LOG_INFO, NC, " %s;", (unsigned char *)curr->data);
+				cyd_printf(LOG_INFO, MAGENTA, " %s", curr->data);
+				if (curr->next) {
+					cyd_printf(LOG_INFO, NC, ";");
 					curr = curr->next;
+				}
 				else
 					break;
 			}

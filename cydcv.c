@@ -23,6 +23,28 @@ static inline void freep(void *p) { free(*(void**) p); }
 #define YD_BASE_URL "http://fanyi.youdao.com"
 #define YD_API_URL	YD_BASE_URL "/openapi.do?keyfrom=%s&key=%s&type=data&doctype=json&version=1.1&q=%s"
 
+#define NC                    "\033[0m"
+#define BOLD                  "\033[1m"
+
+#define BLACK                 "\033[0;30m"
+#define RED                   "\033[0;31m"
+#define GREEN                 "\033[0;32m"
+#define YELLOW                "\033[0;33m"
+#define BLUE                  "\033[0;34m"
+#define MAGENTA               "\033[0;35m"
+#define CYAN                  "\033[0;36m"
+#define WHITE                 "\033[0;37m"
+#define BOLDBLACK             "\033[1;30m"
+#define BOLDRED               "\033[1;31m"
+#define BOLDGREEN             "\033[1;32m"
+#define BOLDYELLOW            "\033[1;33m"
+#define BOLDBLUE              "\033[1;34m"
+#define BOLDMAGENTA           "\033[1;35m"
+#define BOLDCYAN              "\033[1;36m"
+#define BOLDWHITE             "\033[1;37m"
+
+#define COLORFUL(x, COLOR)    COLOR x NC
+
 /* typedefs and objects */
 typedef enum __loglevel_t {
 	LOG_INFO    = 1,
@@ -152,7 +174,9 @@ int streq(const char *s1, const char *s2)
 	return strcmp(s1, s2) == 0;
 }
 
-int cyd_vfprintf(FILE *stream, loglevel_t level, const char *format, va_list args)
+typedef const char * COLOR;
+
+int cyd_vfprintf(FILE *stream, loglevel_t level, COLOR color, const char *format, va_list args)
 {
     const char *prefix;
     char bufout[128];
@@ -180,19 +204,22 @@ int cyd_vfprintf(FILE *stream, loglevel_t level, const char *format, va_list arg
             break;
     }
 
+    if (cfg.color == 0)
+	    color = NC;
+
     /* f.l.w.: 128 should be big enough... */
-    snprintf(bufout, 128, "%s %s", prefix, format);
+    snprintf(bufout, 128, "%s%s %s%s", color, prefix, format, NC);
 
     return vfprintf(stream, bufout, args);
 }
 
-int cyd_printf(loglevel_t level, const char *format, ...)
+int cyd_printf(loglevel_t level, COLOR color, const char *format, ...)
 {
     int ret;
     va_list args;
 
     va_start(args, format);
-    ret = cyd_vfprintf(stdout, level, format, args);
+    ret = cyd_vfprintf(stdout, level, color, format, args);
     va_end(args);
 
     return ret;
@@ -204,11 +231,12 @@ int cyd_fprintf(FILE *stream, loglevel_t level, const char *format, ...)
     va_list args;
 
     va_start(args, format);
-    ret = cyd_vfprintf(stream, level, format, args);
+    ret = cyd_vfprintf(stream, level, NC, format, args);
     va_end(args);
 
     return ret;
 }
+
 
 // linked list implemention from libalpm
 list_t *list_add(list_t *list, void *data)
@@ -377,7 +405,7 @@ void *json_get_valueptr(json_parser_t *parser)
 			addr = (uint8_t *)&parser->web_dic;
 			break;
 	}
-	cyd_printf(LOG_DEBUG, "json_get_valueptr: type - %d, addr - 0x%x\n",
+	cyd_printf(LOG_DEBUG, NC, "json_get_valueptr: type - %d, addr - 0x%x\n",
 			(unsigned int *)parser->key->type, (unsigned int *)addr);
 
 	return addr + parser->key->offset;
@@ -411,7 +439,7 @@ int json_start_map(void *ctx)
 	json_parser_t *p = ctx;
 
 	p->depth++;
-	cyd_printf(LOG_DEBUG, "json_start_map: depth - %d, json_parser_t - 0x%x\n",
+	cyd_printf(LOG_DEBUG, NC, "json_start_map: depth - %d, json_parser_t - 0x%x\n",
             p->depth, (unsigned int *)p);
 	if (p->depth > 1) {
 		if (p->key->type  == JSON_KEY_BASIC_DIC) {
@@ -436,7 +464,7 @@ int json_string(void *ctx, const unsigned char *data, size_t size)
 	if (valueptr == NULL)
     	return 1;
 
-    cyd_printf(LOG_DEBUG, "json_string_multivalued: dest - 0x%x, data - %s, size - %d\n",
+	cyd_printf(LOG_DEBUG, NC, "json_string_multivalued: dest - 0x%x, data - %s, size - %d\n",
 			valueptr, data, size);
 	if (p->key->multivalued)
 		return json_string_multivalued(valueptr, data, size);
@@ -540,13 +568,13 @@ int query(CURL *curl, const char *word)
 
 	escaped = curl_easy_escape(curl, word, span);
 	if (escaped) {
-		cyd_printf(LOG_DEBUG, "Encoded: %s\n", escaped);
+		cyd_printf(LOG_DEBUG, NC, "Encoded: %s\n", escaped);
 	}
 
 	cyd_asprintf(&url, YD_API_URL, API, API_KEY, escaped);
 	curl_easy_setopt(curl, CURLOPT_URL, url);
 
-	cyd_printf(LOG_DEBUG, "curl_easy_perform %s\n", url);
+	cyd_printf(LOG_DEBUG, NC, "curl_easy_perform %s\n", url);
 	curlstat = curl_easy_perform(curl);
 
 	if (curlstat != CURLE_OK) {
@@ -555,7 +583,7 @@ int query(CURL *curl, const char *word)
 	}
 
 	curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &httpcode);
-	cyd_printf(LOG_DEBUG, "server responded with %ld\n", httpcode);
+	cyd_printf(LOG_DEBUG, NC, "server responded with %ld\n", httpcode);
 	if (httpcode >= 400) {
 		cyd_fprintf(stderr, LOG_ERROR, "error, server responded with HTTP %ld\n", httpcode);
 		return -1;
@@ -575,61 +603,61 @@ int query(CURL *curl, const char *word)
 void print_explanation(json_parser_t *parser)
 {
 	int has_result = 0;
-	cyd_printf(LOG_INFO, "%s", parser->query);
+	cyd_printf(LOG_INFO, NC, "%s", parser->query);
 	if (parser->basic_dic != NULL) {
 		has_result = 1;
 		basic_dic_t *dic = parser->basic_dic;
 		if (dic->uk_phonetic && dic->us_phonetic)
-			cyd_printf(LOG_INFO, " UK: [%s], US: [%s]\n", dic->uk_phonetic, dic->us_phonetic);
+			cyd_printf(LOG_INFO, NC, " UK: [%s], US: [%s]\n", dic->uk_phonetic, dic->us_phonetic);
 		else if (dic->phonetic)
-			cyd_printf(LOG_INFO, " [%s]\n", dic->phonetic);
+			cyd_printf(LOG_INFO, NC, " [%s]\n", dic->phonetic);
 		else
-			cyd_printf(LOG_INFO, "\n");
+			cyd_printf(LOG_INFO, NC, "\n");
 
 		if (dic->explains) {
-			cyd_printf(LOG_INFO, "  Word Explanation:\n");
+			cyd_printf(LOG_INFO, NC, "  Word Explanation:\n");
 			list_t *curr = dic->explains;
 			while (curr->data) {
-				cyd_printf(LOG_INFO, "     * %s\n", (unsigned char *)curr->data);
+				cyd_printf(LOG_INFO, NC, "     * %s\n", (unsigned char *)curr->data);
 				if (curr->next)
 					curr = curr->next;
 				else
 					break;
 			}
 		} else
-			cyd_printf(LOG_INFO, "\n");
+			cyd_printf(LOG_INFO, NC, "\n");
 	} else if (parser->translation) {
 		has_result = 1;
-		cyd_printf(LOG_INFO, "\n  Translation:\n");
+		cyd_printf(LOG_INFO, NC, "\n  Translation:\n");
 		list_t *curr = parser->translation;
 		while (curr->data) {
-			cyd_printf(LOG_INFO, "     * %s\n", (unsigned char *)curr->data);
+			cyd_printf(LOG_INFO, NC, "     * %s\n", (unsigned char *)curr->data);
 			if (curr->next)
 				curr = curr->next;
 			else
 				break;
 		}
 	} else
-		cyd_printf(LOG_INFO, "\n");
+		cyd_printf(LOG_INFO, NC, "\n");
 
 	if (cfg.out_full && parser->web_dic_list) {
 		has_result = 1;
-		cyd_printf(LOG_INFO, "\n  Web Reference:\n");
+		cyd_printf(LOG_INFO, NC, "\n  Web Reference:\n");
 		list_t *list = parser->web_dic_list;
 		while (list) {
 			web_dic_t *web = list->data;
-			cyd_printf(LOG_INFO, "     * %s\n", web->key);
+			cyd_printf(LOG_INFO, NC, "     * %s\n", web->key);
 			list_t *curr = web->value;
 			// print values in the same line
-			cyd_printf(LOG_INFO, "      ");
+			cyd_printf(LOG_INFO, NC, "      ");
 			while (curr) {
-				printf(" %s;", (unsigned char *)curr->data);
+				cyd_printf(LOG_INFO, NC, " %s;", (unsigned char *)curr->data);
 				if (curr->next)
 					curr = curr->next;
 				else
 					break;
 			}
-			cyd_printf(LOG_INFO, "\n");
+			cyd_printf(LOG_INFO, NC, "\n");
 
 			if (list->next)
 				list = list->next;
@@ -639,9 +667,9 @@ void print_explanation(json_parser_t *parser)
 	}
 
 	if (has_result == 0)
-		cyd_printf(LOG_INFO, " -- No result for this query.\n");
+		cyd_printf(LOG_INFO, NC, " -- No result for this query.\n");
 
-	cyd_printf(LOG_INFO, "\n");
+	cyd_printf(LOG_INFO, NC, "\n");
 }
 
 void usage(void)
@@ -682,7 +710,7 @@ int parse_options(int argc, char **argv)
 	};
 
 	while((opt = getopt_long(argc, argv, "fsxch", opts, &option_index)) != -1) {
-		cyd_printf(LOG_DEBUG, "parse_options: opt - 0x%x\n", opt);
+		cyd_printf(LOG_DEBUG, NC, "parse_options: opt - 0x%x\n", opt);
 		switch (opt) {
 			/* options */
 			case 'f':
@@ -721,7 +749,7 @@ int parse_options(int argc, char **argv)
 
 	while (optind < argc) {
 		if (!list_find_str(cfg.words, argv[optind])) {
-			cyd_printf(LOG_DEBUG, "add words: %s\n", argv[optind]);
+			cyd_printf(LOG_DEBUG, NC, "add words: %s\n", argv[optind]);
 			cfg.words = list_add(cfg.words, strdup(argv[optind]));
 		}
 		optind++;
@@ -747,7 +775,7 @@ int main(int argc, char **argv)
 		return ret;
 	}
 
-	cyd_printf(LOG_DEBUG, "initializing curl\n");
+	cyd_printf(LOG_DEBUG, NC, "initializing curl\n");
 	curl_global_init(CURL_GLOBAL_ALL);
 	CURL *curl = curl_easy_init();
 
@@ -759,7 +787,7 @@ int main(int argc, char **argv)
 
  	list_t *word = cfg.words;
 	while (word) {
-		cyd_printf(LOG_DEBUG, "word to translate: %s\n", word->data);
+		cyd_printf(LOG_DEBUG, NC, "word to translate: %s\n", word->data);
 
 		query(curl, word->data);
 

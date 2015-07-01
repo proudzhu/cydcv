@@ -759,6 +759,7 @@ int parse_options(int argc, char **argv)
 				cfg.logmask |= LOG_DEBUG;
 				break;
 			case 'h':
+			default:
 				usage();
 				exit(0);
 		}

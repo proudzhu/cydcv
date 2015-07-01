@@ -781,9 +781,12 @@ int main(int argc, char **argv)
 
 	/* initialize config */
 	cfg.logmask = LOG_INFO|LOG_ERROR;
-	cfg.out_full = 0;
+	cfg.out_full = 1;
 	cfg.color = 0;
 	cfg.selection = 0;
+
+	if (isatty(fileno(stdout)))
+		cfg.color = 1;
 
 	ret = parse_options(argc, argv);
 	if (ret)

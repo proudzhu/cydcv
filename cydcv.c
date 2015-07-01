@@ -815,6 +815,27 @@ int main(int argc, char **argv)
 	}
 
 	if (word == NULL) {
+		if (cfg.selection) {
+			FILE *file;
+			char last[128], curr[128];
+
+			file = popen("xsel", "r");
+			cyd_printf(LOG_INFO, NC, "Waiting for selection>\n");
+			fgets(last, 128, file);
+			fclose(file);
+			while (1) {
+				sleep(1);
+				file = popen("xsel", "r");
+				fgets(curr, 128, file);
+				fclose(file);
+				if (streq(last, curr) == 0) {
+					memcpy(last, curr, 128);
+					query(curl, last);
+					cyd_printf(LOG_INFO, NC, "Waiting for selection>\n");
+				}
+			}
+			goto done;
+		}
 		while (1) {
 			char *line = readline("> ");
 			add_history(line);
@@ -828,6 +849,7 @@ int main(int argc, char **argv)
 		}
 	}
 
+done:
 	curl_easy_cleanup(curl);
 
 	curl_global_cleanup();

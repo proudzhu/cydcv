@@ -654,7 +654,7 @@ void print_explanation(json_parser_t *parser)
 
 	if (cfg.out_full && parser->web_dic_list) {
 		has_result = 1;
-		cyd_printf(LOG_INFO, CYAN, "\n  Web Reference:\n");
+		cyd_printf(LOG_INFO, CYAN, "\n   Web Reference:\n");
 		list_t *list = parser->web_dic_list;
 		while (list) {
 			web_dic_t *web = list->data;

@@ -553,7 +553,6 @@ int query(CURL *curl, const char *word)
 	struct yajl_handle_t *yajl_hand = NULL;
 	_cleanup_free_ char *escaped = NULL, *url = NULL;
 	long httpcode;
-	int span = 0;
 	json_parser_t *json_parser;
 
 	json_parser = malloc(sizeof(json_parser_t));
@@ -564,11 +563,7 @@ int query(CURL *curl, const char *word)
 	curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, yajl_parse_stream);
 	curl_easy_setopt(curl, CURLOPT_WRITEDATA, yajl_hand);
 
-	/* get the word size */
-	while (word[span] != '\0')
-		span++;
-
-	escaped = curl_easy_escape(curl, word, span);
+	escaped = curl_easy_escape(curl, word, strlen(word));
 	if (escaped) {
 		cyd_printf(LOG_DEBUG, NC, "Encoded: %s\n", escaped);
 	}

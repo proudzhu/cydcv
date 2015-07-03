@@ -27,6 +27,10 @@ static inline void freep(void *p) { free(*(void**) p); }
 
 #define NC                    "\033[0m"
 #define BOLD                  "\033[1m"
+#define UNDERLINE             "\033[4m"
+#define BLINK                 "\033[5m"
+#define REVERSE               "\033[7m"
+#define CONCEALED             "\033[8m"
 
 #define BLACK                 "\033[0;30m"
 #define RED                   "\033[0;31m"
@@ -600,7 +604,7 @@ int query(CURL *curl, const char *word)
 void print_explanation(json_parser_t *parser)
 {
 	int has_result = 0;
-	cyd_printf(LOG_INFO, NC, "%s", parser->query);
+	cyd_printf(LOG_INFO, UNDERLINE, "%s", parser->query);
 	if (parser->basic_dic != NULL) {
 		has_result = 1;
 		basic_dic_t *dic = parser->basic_dic;

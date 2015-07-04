@@ -20,7 +20,7 @@
 # --------------------------------------------------------------------
 
 # options for passing to _arguments: main ydcv commands
-ydcv_opts_commands=(
+cydcv_opts_commands=(
     '(-f --full)'{-f,--full}'[print full web reference, only the first 3 results will be printed without this flag.]'
     '(-h --help)'{-h,--help}'[show this help message and exit]'
     '--color[colorize the output. Default to "auto" or can be "never" or "always".]'
@@ -34,6 +34,6 @@ case "${words[CURRENT - 1]}" in
 		compadd $coloropts
 		;;
 	*)
-		_arguments $ydcv_opts_commands
+		_arguments $cydcv_opts_commands
 		;;
 esac

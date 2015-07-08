@@ -8,15 +8,15 @@ DISTFILES  = Makefile cydcv.c
 PREFIX    ?= /usr/local
 MANPREFIX ?= $(PREFIX)/share/man
 
-CPPFLAGS  := -D_GNU_SOURCE -DCOWER_VERSION=\"$(VERSION)\" $(CPPFLAGS)
+CPPFLAGS  := -D_GNU_SOURCE -DCYDCV_VERSION=\"$(VERSION)\" $(CPPFLAGS)
 CFLAGS    := -std=c99 -g -pedantic -Wall -Wextra $(CFLAGS)
 LDFLAGS   := $(LDFLAGS)
 LDLIBS     = -lcurl -lyajl -lreadline
 
 all: $(OUT)
 
-cower:
-	${CC} $(CFLAGS) $(SRC) $(LDFLAGS) $(LDLIBS) -o $(OUT)
+cydcv:
+	${CC} $(CFLAGS) $(CPPFLAGS) $(SRC) $(LDFLAGS) $(LDLIBS) -o $(OUT)
 
 strip: $(OUT)
 	strip --strip-all $(OUT)

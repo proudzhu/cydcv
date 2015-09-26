@@ -634,7 +634,7 @@ void print_explanation(json_parser_t *parser)
 
 		if (cfg.speech) {
 			if (dic->uk_speech && dic->us_speech) {
-				cyd_printf(LOG_INFO, CYAN, "   Text to Speech:\n");
+				cyd_printf(LOG_INFO, CYAN, "  Text to Speech:\n");
 				cyd_printf(LOG_INFO, NC, "     * UK: %s\n", dic->uk_speech);
 				cyd_printf(LOG_INFO, NC, "     * US: %s\n", dic->us_speech);
 			} else if (dic->speech)

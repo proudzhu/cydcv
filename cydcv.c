@@ -224,7 +224,7 @@ int cyd_vfprintf(FILE *stream, loglevel_t level, COLOR color, const char *format
 	    color = NC;
 
     /* f.l.w.: 128 should be big enough... */
-    snprintf(bufout, 128, "%s%s %s%s", color, prefix, format, NC);
+    snprintf(bufout, 128, "%s%s%s%s", color, prefix, format, NC);
 
     return vfprintf(stream, bufout, args);
 }

@@ -138,7 +138,7 @@ void print_explanation(json_parser_t *parser);
 
 /* runtime configuration */
 static struct {
-	loglevel_t logmask;
+	int logmask;
 	bool out_full;
 	int color;
 	bool selection;

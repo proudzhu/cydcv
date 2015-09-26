@@ -647,7 +647,7 @@ void print_explanation(json_parser_t *parser)
 		}
 
 		if (dic->explains) {
-			cyd_printf(LOG_INFO, CYAN, "  Word Explanation:\n");
+			cyd_printf(LOG_INFO, CYAN, "   Word Explanation:\n");
 			list_t *curr = dic->explains;
 			while (curr->data) {
 				cyd_printf(LOG_INFO, NC, "     * %s\n", (unsigned char *)curr->data);

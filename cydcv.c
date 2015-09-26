@@ -55,22 +55,16 @@ static inline void freep(void *p) { free(*(void**) p); }
 
 /* typedefs and objects */
 typedef enum __loglevel_t {
-	LOG_INFO    = 1,
-	LOG_ERROR   = (1 << 1),
-	LOG_WARN    = (1 << 2),
+	LOG_ERROR   = 1,
+	LOG_WARN    = (1 << 1),
+	LOG_INFO    = (1 << 2),
 	LOG_DEBUG   = (1 << 3),
 	LOG_VERBOSE = (1 << 4),
-	LOG_BRIEF   = (1 << 5)
 } loglevel_t;
-
-typedef enum __outlevel_t {
-	OUT_DEFAULT = 1,
-	OUT_SIMPLE	= (1 << 1),
-	OUT_FULL	= (1 << 2),
-} outlevel_t;
 
 enum {
 	OP_DEBUG = 1000,
+	OP_VERBOSE,
 };
 
 struct list_t {
@@ -203,18 +197,20 @@ int cyd_vfprintf(FILE *stream, loglevel_t level, COLOR color, const char *format
     }
 
     switch(level) {
-        case LOG_VERBOSE:
-        case LOG_INFO:
-            prefix = "";
-            break;
         case LOG_ERROR:
             prefix = "ERROR: ";
             break;
         case LOG_WARN:
             prefix = "WARNNING: ";
             break;
+        case LOG_INFO:
+            prefix = "";
+            break;
         case LOG_DEBUG:
             prefix = "DEBUG: ";
+            break;
+        case LOG_VERBOSE:
+            prefix = "VERBOSE: ";
             break;
         default:
             prefix = "";
@@ -744,6 +740,7 @@ int parse_options(int argc, char **argv)
 		{"selection",	no_argument,		0, 'x'},
 		{"color",		optional_argument,	0, 'c'},
 		{"debug",		no_argument,		0, OP_DEBUG},
+		{"verbose",		no_argument,		0, OP_VERBOSE},
 		{"help",		no_argument,		0, 'h'},
 		{0,				0,					0, 0},
 	};
@@ -780,6 +777,11 @@ int parse_options(int argc, char **argv)
 					return 1;
 				}
 				break;
+			case OP_VERBOSE:
+				cfg.logmask |= LOG_VERBOSE;
+			/* fall through
+			 * all enable LOG_DEBUG
+			 */
 			case OP_DEBUG:
 				cfg.logmask |= LOG_DEBUG;
 				break;
@@ -806,7 +808,7 @@ int main(int argc, char **argv)
 	int ret;
 
 	/* initialize config */
-	cfg.logmask = LOG_INFO|LOG_ERROR;
+	cfg.logmask = LOG_ERROR|LOG_WARN|LOG_INFO;
 	cfg.out_full = 1;
 	cfg.color = 0;
 	cfg.selection = 0;

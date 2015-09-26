@@ -394,8 +394,7 @@ int json_end_map(void *ctx)
 
 	p->depth--;
 	if (p->depth > 0) {
-		if (p->key->type == JSON_KEY_WEB_DIC)
-		{
+		if (p->key->type == JSON_KEY_WEB_DIC) {
 			p->web_dic_list = list_add(p->web_dic_list, webdic_dup(&p->web_dic));
 		}
 	}
@@ -625,14 +624,12 @@ void print_explanation(json_parser_t *parser)
 			cyd_printf(LOG_INFO, NC, "], US: [");
 			cyd_printf(LOG_INFO, YELLOW, "%s", dic->us_phonetic);
 			cyd_printf(LOG_INFO, NC, "]\n");
-		}
-		else if (dic->phonetic) {
+		} else if (dic->phonetic) {
 			// cyd_printf(LOG_INFO, NC, " [%s]\n", dic->phonetic);
 			cyd_printf(LOG_INFO, NC, " [");
 			cyd_printf(LOG_INFO, YELLOW, "%s", dic->phonetic);
 			cyd_printf(LOG_INFO, NC, "]\n");
-		}
-		else
+		} else
 			cyd_printf(LOG_INFO, NC, "\n");
 
 		if (cfg.speech) {
@@ -640,8 +637,7 @@ void print_explanation(json_parser_t *parser)
 				cyd_printf(LOG_INFO, CYAN, "   Text to Speech:\n");
 				cyd_printf(LOG_INFO, NC, "     * UK: %s\n", dic->uk_speech);
 				cyd_printf(LOG_INFO, NC, "     * US: %s\n", dic->us_speech);
-			}
-			else if (dic->speech)
+			} else if (dic->speech)
 				cyd_printf(LOG_INFO, NC, "     * %s\n", dic->speech);
 			cyd_printf(LOG_INFO, NC, "\n");
 		}

@@ -21,9 +21,10 @@ static inline void freep(void *p) { free(*(void**) p); }
 // API KEY from ydcv
 #define API "YouDaoCV"
 #define API_KEY "659600698"
+#define API_VERSION "1.1"
 
 #define YD_BASE_URL "http://fanyi.youdao.com"
-#define YD_API_URL	YD_BASE_URL "/openapi.do?keyfrom=%s&key=%s&type=data&doctype=json&version=1.1&q=%s"
+#define YD_API_URL	YD_BASE_URL "/openapi.do?keyfrom=%s&key=%s&type=data&doctype=json&version=%s&q=%s"
 
 #define NC                    "\033[0m"
 #define BOLD                  "\033[1m"
@@ -572,7 +573,7 @@ int query(CURL *curl, const char *word)
 		cyd_printf(LOG_DEBUG, NC, "Encoded: %s\n", escaped);
 	}
 
-	cyd_asprintf(&url, YD_API_URL, API, API_KEY, escaped);
+	cyd_asprintf(&url, YD_API_URL, API, API_KEY, API_VERSION, escaped);
 	curl_easy_setopt(curl, CURLOPT_URL, url);
 
 	cyd_printf(LOG_DEBUG, NC, "curl_easy_perform %s\n", url);

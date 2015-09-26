@@ -21,7 +21,7 @@ static inline void freep(void *p) { free(*(void**) p); }
 // API KEY from ydcv
 #define API "YouDaoCV"
 #define API_KEY "659600698"
-#define API_VERSION "1.1"
+#define API_VERSION "1.2"
 
 #define YD_BASE_URL "http://fanyi.youdao.com"
 #define YD_API_URL	YD_BASE_URL "/openapi.do?keyfrom=%s&key=%s&type=data&doctype=json&version=%s&q=%s"
@@ -99,6 +99,11 @@ struct basic_dic_t {
 	char *us_phonetic;
 	char *phonetic;
 	char *uk_phonetic;
+
+	char *us_speech;
+	char *speech;
+	char *uk_speech;
+
 	list_t *explains;
 };
 typedef struct basic_dic_t basic_dic_t;
@@ -142,6 +147,7 @@ static struct {
 	int out_full;
     int color;
 	int selection;
+	int speech;
 
 	list_t *words;
 } cfg;
@@ -169,9 +175,12 @@ static const struct key_t json_keys[] = {
 	{ "key",			JSON_KEY_WEB_DIC,	0, offsetof(web_dic_t, key) },
 	{ "phonetic",		JSON_KEY_BASIC_DIC,	0, offsetof(basic_dic_t, phonetic) },
 	{ "query",			JSON_KEY_METADATA,	0, offsetof(json_parser_t, query) },
+	{ "speech",			JSON_KEY_BASIC_DIC,	0, offsetof(basic_dic_t, speech) },
 	{ "translation",	JSON_KEY_METADATA,	1, offsetof(json_parser_t, translation) },
 	{ "uk-phonetic",	JSON_KEY_BASIC_DIC,	0, offsetof(basic_dic_t, uk_phonetic) },
+	{ "uk-speech",		JSON_KEY_BASIC_DIC,	0, offsetof(basic_dic_t, uk_speech) },
 	{ "us-phonetic",	JSON_KEY_BASIC_DIC,	0, offsetof(basic_dic_t, us_phonetic) },
+	{ "us-speech",		JSON_KEY_BASIC_DIC, 0, offsetof(basic_dic_t, us_speech) },
 	{ "value",			JSON_KEY_WEB_DIC,	1, offsetof(web_dic_t, value) },
 	{ "web",			JSON_KEY_WEB_DIC,	0, 0 },
 };
@@ -626,6 +635,17 @@ void print_explanation(json_parser_t *parser)
 		else
 			cyd_printf(LOG_INFO, NC, "\n");
 
+		if (cfg.speech) {
+			if (dic->uk_speech && dic->us_speech) {
+				cyd_printf(LOG_INFO, CYAN, "   Text to Speech:\n");
+				cyd_printf(LOG_INFO, NC, "     * UK: %s\n", dic->uk_speech);
+				cyd_printf(LOG_INFO, NC, "     * US: %s\n", dic->us_speech);
+			}
+			else if (dic->speech)
+				cyd_printf(LOG_INFO, NC, "     * %s\n", dic->speech);
+			cyd_printf(LOG_INFO, NC, "\n");
+		}
+
 		if (dic->explains) {
 			cyd_printf(LOG_INFO, CYAN, "  Word Explanation:\n");
 			list_t *curr = dic->explains;
@@ -691,7 +711,7 @@ void print_explanation(json_parser_t *parser)
 
 void usage(void)
 {
-	fprintf(stderr, "usage: cydcv [-h] [-f] [-s] [-x] [--color {always,auto,never}]\n");
+	fprintf(stderr, "usage: cydcv [-h] [-f] [-s] [-S] [-x] [--color {always,auto,never}]\n");
 	fprintf(stderr, "             [words [words ...]]\n\n");
 	fprintf(stderr, "Youdao Console Version\n\n");
 	fprintf(stderr,
@@ -704,6 +724,7 @@ void usage(void)
 			"                        will be printed without this flag.\n"
 			"  -s, --simple          only show explainations. argument \"-f\" will not take\n"
 			"                        effect\n"
+			"  -S, --speech          print URL to speech audio.\n"
 			"  -x, --selection       show explaination of current selection.\n"
 			"  -c, --color {always,auto,never}\n"
 			"                        colorize the output. Default to 'auto' or can be\n"
@@ -719,6 +740,7 @@ int parse_options(int argc, char **argv)
 		/* options */
 		{"full",		no_argument,		0, 'f'},
 		{"simple",		no_argument,		0, 's'},
+		{"speech",		no_argument,		0, 'S'},
 		{"selection",	no_argument,		0, 'x'},
 		{"color",		optional_argument,	0, 'c'},
 		{"debug",		no_argument,		0, OP_DEBUG},
@@ -726,7 +748,7 @@ int parse_options(int argc, char **argv)
 		{0,				0,					0, 0},
 	};
 
-	while((opt = getopt_long(argc, argv, "fsxch", opts, &option_index)) != -1) {
+	while((opt = getopt_long(argc, argv, "fsSxch", opts, &option_index)) != -1) {
 		cyd_printf(LOG_DEBUG, NC, "parse_options: opt - 0x%x\n", opt);
 		switch (opt) {
 			/* options */
@@ -735,6 +757,9 @@ int parse_options(int argc, char **argv)
 				break;
 			case 's':
 				cfg.out_full = 0;
+				break;
+			case 'S':
+				cfg.speech = 1;
 				break;
 			case 'x':
 				cfg.selection = 1;
@@ -785,6 +810,7 @@ int main(int argc, char **argv)
 	cfg.out_full = 1;
 	cfg.color = 0;
 	cfg.selection = 0;
+	cfg.speech = 0;
 
 	if (isatty(fileno(stdout)))
 		cfg.color = 1;

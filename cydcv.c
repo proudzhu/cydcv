@@ -330,6 +330,9 @@ void free_basic_dic(basic_dic_t *basic_dic)
 	free(basic_dic->us_phonetic);
 	free(basic_dic->phonetic);
 	free(basic_dic->uk_phonetic);
+	free(basic_dic->us_speech);
+	free(basic_dic->speech);
+	free(basic_dic->uk_speech);
 
 	FREE_STRING_LIST(basic_dic->explains);
 

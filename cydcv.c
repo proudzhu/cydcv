@@ -6,6 +6,7 @@
 #include <string.h>
 #include <stdint.h>
 #include <unistd.h>
+#include <stdbool.h>
 
 /* external libs */
 #include <curl/curl.h>
@@ -143,11 +144,11 @@ void print_explanation(json_parser_t *parser);
 
 /* runtime configuration */
 static struct {
-    loglevel_t logmask;
-	int out_full;
-    int color;
-	int selection;
-	int speech;
+	loglevel_t logmask;
+	bool out_full;
+	int color;
+	bool selection;
+	bool speech;
 
 	list_t *words;
 } cfg;

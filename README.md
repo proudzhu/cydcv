@@ -11,7 +11,3 @@ translate API.
 Depends:
 * [libcurl](https://github.com/bagder/curl)
 * [yajl](https://github.com/lloyd/yajl)
-
-TODO:
-* debug level
-* color support
